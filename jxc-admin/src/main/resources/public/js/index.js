@@ -22,18 +22,18 @@ layui.use(['form','jquery','jquery_cookie'], function () {
             layer.msg('密码不能为空');
             return false;
         }
-       /* if ( data.captcha =="undefined" || data.captcha =="" || data.captcha.trim()=="")  {
+        if ( data.captcha =="undefined" || data.captcha =="" || data.captcha.trim()=="")  {
             layer.msg('验证码不能为空');
             return false;
-        }*/
+        }
         $.ajax({
             type:"post",
-            url:ctx+"/user/login",
+            url:ctx+"/login",
             data:{
                 userName:data.username,
-                password:data.password
-                /*captchaCode:data.captcha,
-                rememberMe:$("#rememberMe").is(":checked")*/
+                password:data.password,
+                captchaCode:data.captcha,
+                rememberMe:$("#rememberMe").is(":checked")
             },
             dataType:"json",
             success:function (data) {
@@ -42,7 +42,7 @@ layui.use(['form','jquery','jquery_cookie'], function () {
                         window.location.href=ctx+"/main";
                     });
                 }else{
-                    //$("#refreshCaptcha").attr("src", "/image?"+Math.floor(Math.random() * 100));
+                    $("#refreshCaptcha").attr("src", "/image?"+Math.floor(Math.random() * 100));
                     layer.msg(data.message);
                 }
             }

@@ -1,10 +1,12 @@
 package com.xxxx.admin.controller;
 
 
+import com.xxxx.admin.dto.UserQuery;
 import com.xxxx.admin.exception.ParamsException;
 import com.xxxx.admin.pojo.User;
 import com.xxxx.admin.service.IUserService;
 import com.xxxx.admin.vo.RespBean;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import org.springframework.stereotype.Controller;
@@ -12,6 +14,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
+import java.security.Principal;
+import java.util.Map;
 
 /**
  * <p>
@@ -44,13 +48,13 @@ public class UserController {
         }
     }*/
 
-    @RequestMapping("/login")
+   /* @RequestMapping("/login")
     @ResponseBody
     public RespBean login(String userName, String password, HttpSession session) {
         User user = userService.login(userName, password);
         session.setAttribute("user", user);
         return RespBean.success("用户登录成功!");
-    }
+    }*/
 
     /**
      * 用户信息设置页面
@@ -58,9 +62,11 @@ public class UserController {
      * @return
      */
     @RequestMapping("setting")
-    public String setting(HttpSession session) {
-        User user = (User) session.getAttribute("user");
-        session.setAttribute("user", userService.getById(user.getId()));
+    public String setting(Principal principal, Model model) {
+       /* User user = (User) session.getAttribute("user");
+        session.setAttribute("user", userService.getById(user.getId()));*/
+        User user = userService.findUserByUserName(principal.getName());
+        model.addAttribute("user", user);
         return "user/setting";
     }
 
@@ -79,12 +85,27 @@ public class UserController {
 
     @RequestMapping("updateUserPassword")
     @ResponseBody
-    public RespBean updateUserPassword(HttpSession session, String oldPassword, String newPassword, String confirmPassword) {
-        User user = (User) session.getAttribute("user");
-        userService.updateUserPassword(user.getUserName(), oldPassword, newPassword, confirmPassword);
+    public RespBean updateUserPassword(Principal principal, String oldPassword, String newPassword, String confirmPassword) {
+        /*User user = (User) session.getAttribute("user");*/
+        userService.updateUserPassword(principal.getName(), oldPassword, newPassword, confirmPassword);
         return RespBean.success("用户密码更新成功!");
     }
 
+    /**
+     * 用户管理主页
+     *
+     * @return
+     */
+    @RequestMapping("index")
+    public String index() {
+        return "user/user";
+    }
 
+
+    @RequestMapping("list")
+    @ResponseBody
+    public Map<String, Object> userList(UserQuery userQuery) {
+        return userService.userList(userQuery);
+    }
 
 }

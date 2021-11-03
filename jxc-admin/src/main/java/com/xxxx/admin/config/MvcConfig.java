@@ -1,3 +1,4 @@
+/*
  package com.xxxx.admin.config;
 
 import com.xxxx.admin.interceptor.NologinInterceptor;
@@ -22,3 +23,4 @@ public class MvcConfig extends WebMvcConfigurerAdapter {
                         "/error/**", "/images/**", "/js/**", "/lib/**");
     }
 }
+*/

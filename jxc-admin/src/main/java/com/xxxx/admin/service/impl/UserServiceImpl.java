@@ -1,16 +1,24 @@
 package com.xxxx.admin.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.xxxx.admin.dto.UserQuery;
 import com.xxxx.admin.mapper.UserMapper;
 import com.xxxx.admin.pojo.User;
 import com.xxxx.admin.service.IUserService;
 import com.xxxx.admin.utils.AssertUtil;
 import com.xxxx.admin.utils.StringUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * <p>
@@ -24,6 +32,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IUserService {
 
     @Autowired
+    private PasswordEncoder passwordEncoder;
+    @Autowired
     private UserMapper userMapper;
 
     /**
@@ -32,7 +42,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
      * @param userName
      * @param password
      * @return
-     */
+     *//*
     @Override
     public User login(String userName, String password) {
         AssertUtil.isTrue(StringUtil.isEmpty(userName), "用户名不能为空!");
@@ -41,7 +51,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         AssertUtil.isTrue(null == user, "该用户记录不存在或已注销!");
         AssertUtil.isTrue(!(user.getPassword().equals(password)), "密码错误!");
         return user;
-    }
+    }*/
 
     /**
      * 通过用户名查询User对象
@@ -63,8 +73,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public void updateUserInfo(User user) {
-        AssertUtil.isTrue(StringUtil.isEmpty(user.getUserName()), "用户名不能为空!");
-        User tempUser = findUserByUserName(user.getUserName());
+        AssertUtil.isTrue(StringUtil.isEmpty(user.getUsername()), "用户名不能为空!");
+        User tempUser = findUserByUserName(user.getUsername());
         AssertUtil.isTrue(null != tempUser && !(tempUser.getId().equals(user.getId())), "用户名已存在");
         AssertUtil.isTrue(!(this.updateById(user)), "用户信息更新失败!");
     }
@@ -86,10 +96,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         AssertUtil.isTrue(StringUtil.isEmpty(oldPassword), "请输入原始密码!");
         AssertUtil.isTrue(StringUtil.isEmpty(newPassword), "请输入新密码!");
         AssertUtil.isTrue(StringUtil.isEmpty(confirmPassword), "请输入确认始密码!");
-        AssertUtil.isTrue(!(user.getPassword().equals(oldPassword)), "原始密码输入错误！");
+        AssertUtil.isTrue(!(passwordEncoder.matches(oldPassword, user.getPassword())), "原始密码输入错误！");
         AssertUtil.isTrue(!(newPassword.equals(confirmPassword)), "新密码输入不一致!");
         AssertUtil.isTrue(newPassword.equals(oldPassword), "新密码与原始密码不能一致!");
-        user.setPassword(newPassword);
+        user.setPassword(passwordEncoder.encode(newPassword));
         AssertUtil.isTrue(!(this.updateById(user)), "用户密码更新失败!");
+    }
+
+    @Override
+    public Map<String, Object> userList(UserQuery userQuery) {
+        IPage<User> page=new Page<User>(userQuery.getPage(),userQuery.getLimit());
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("is_del",0);
+        if(StringUtils.isNotBlank(userQuery.getUserName())){
+            queryWrapper.like("user_name",userQuery.getUserName());
+        }
+        page=this.baseMapper.selectPage(page,queryWrapper);
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("code",0);
+        map.put("msg","");
+        map.put("data",page.getRecords());
+        map.put("count",page.getTotal());
+        return map;
     }
 }

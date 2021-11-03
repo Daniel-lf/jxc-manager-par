@@ -1,3 +1,4 @@
+/*
 package com.xxxx.admin.interceptor;
 
 import com.xxxx.admin.pojo.User;
@@ -18,3 +19,4 @@ public class NologinInterceptor implements HandlerInterceptor {
         return true;
     }
 }
+*/
