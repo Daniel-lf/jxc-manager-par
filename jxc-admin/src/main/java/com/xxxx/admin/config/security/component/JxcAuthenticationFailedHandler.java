@@ -1,4 +1,4 @@
-package com.xxxx.admin.config.security;
+package com.xxxx.admin.config.security.component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xxxx.admin.vo.RespBean;

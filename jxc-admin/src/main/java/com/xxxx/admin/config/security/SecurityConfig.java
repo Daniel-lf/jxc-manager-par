@@ -1,6 +1,9 @@
 package com.xxxx.admin.config.security;
 
 import com.xxxx.admin.config.security.component.CaptchaCodeFilter;
+import com.xxxx.admin.config.security.component.JxcAuthenticationFailedHandler;
+import com.xxxx.admin.config.security.component.JxcAuthenticationSuccessHandler;
+import com.xxxx.admin.config.security.component.JxcLogoutSuccessHandler;
 import com.xxxx.admin.pojo.User;
 import com.xxxx.admin.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;

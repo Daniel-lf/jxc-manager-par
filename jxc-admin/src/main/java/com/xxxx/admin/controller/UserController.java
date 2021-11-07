@@ -5,7 +5,9 @@ import com.xxxx.admin.dto.UserQuery;
 import com.xxxx.admin.exception.ParamsException;
 import com.xxxx.admin.pojo.User;
 import com.xxxx.admin.service.IUserService;
+import com.xxxx.admin.utils.AssertUtil;
 import com.xxxx.admin.vo.RespBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -29,7 +31,7 @@ import java.util.Map;
 @RequestMapping("/user")
 public class UserController {
 
-    @Resource
+    @Autowired
     private IUserService userService;
 
    /* @RequestMapping("/login")
@@ -106,6 +108,36 @@ public class UserController {
     @ResponseBody
     public Map<String, Object> userList(UserQuery userQuery) {
         return userService.userList(userQuery);
+    }
+
+
+    @RequestMapping("addOrUpdateUserPage")
+    public String addOrUpdatePage(Integer id, Model model) {
+        if (null != id) {
+            model.addAttribute("user", userService.getById(id));
+        }
+        return "user/add_update";
+    }
+
+    @RequestMapping("save")
+    @ResponseBody
+    public RespBean saveUser(User user) {
+        userService.saveUser(user);
+        return RespBean.success("用户记录添加成功!");
+    }
+
+    @RequestMapping("update")
+    @ResponseBody
+    public RespBean udpateUser(User user) {
+        userService.updateUser(user);
+        return RespBean.success("用户记录更新成功!");
+    }
+
+    @RequestMapping("delete")
+    @ResponseBody
+    public RespBean delete(String[] ids){
+        userService.delete(ids);
+        return RespBean.success("用户记录删除成功!");
     }
 
 }

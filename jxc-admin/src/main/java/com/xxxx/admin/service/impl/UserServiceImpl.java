@@ -9,6 +9,7 @@ import com.xxxx.admin.mapper.UserMapper;
 import com.xxxx.admin.pojo.User;
 import com.xxxx.admin.service.IUserService;
 import com.xxxx.admin.utils.AssertUtil;
+import com.xxxx.admin.utils.PageReusltUtil;
 import com.xxxx.admin.utils.StringUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.StringBufferInputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,9 +36,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Autowired
     private PasswordEncoder passwordEncoder;
-    @Autowired
-    private UserMapper userMapper;
-
     /**
      * 用户登录方法
      *
@@ -105,18 +105,63 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Override
     public Map<String, Object> userList(UserQuery userQuery) {
-        IPage<User> page=new Page<User>(userQuery.getPage(),userQuery.getLimit());
+        IPage<User> page = new Page<User>(userQuery.getPage(), userQuery.getLimit());
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("is_del",0);
-        if(StringUtils.isNotBlank(userQuery.getUserName())){
-            queryWrapper.like("user_name",userQuery.getUserName());
+        queryWrapper.eq("is_del", 0);
+        if (StringUtils.isNotBlank(userQuery.getUserName())) {
+            queryWrapper.like("user_name", userQuery.getUserName());
         }
-        page=this.baseMapper.selectPage(page,queryWrapper);
+        page = this.baseMapper.selectPage(page, queryWrapper);
         HashMap<String, Object> map = new HashMap<>();
-        map.put("code",0);
-        map.put("msg","");
-        map.put("data",page.getRecords());
-        map.put("count",page.getTotal());
-        return map;
+        return PageReusltUtil.getResult(page.getTotal(),page.getRecords());
     }
+
+    /**
+     * 用户添加
+     *
+     * @param user
+     */
+    @Override
+    @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+    public void saveUser(User user) {
+        AssertUtil.isTrue(StringUtils.isBlank(user.getUsername()), "用户名不能为空！");
+        AssertUtil.isTrue(null != this.findUserByUserName(user.getUsername()), "用户名已存在！");
+        user.setPassword(passwordEncoder.encode("123456"));
+        user.setIsDel(0);
+        AssertUtil.isTrue(!(this.save(user)), "用户记录添加失败！");
+    }
+
+    /**
+     * 用户更新··
+     *
+     * @param user
+     */
+    @Override
+    @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+    public void updateUser(User user) {
+        AssertUtil.isTrue(StringUtils.isBlank(user.getUsername()), "用户名不能为空!");
+        User temp = this.findUserByUserName(user.getUsername());
+        AssertUtil.isTrue(null != temp && !(temp.getId().equals(user.getId())), "用户名已存在！");
+        AssertUtil.isTrue(!(this.updateById(user)), "用户记录更新失败！");
+    }
+
+    /**
+     * 用户删除
+     *
+     * @param ids
+     */
+    @Override
+    @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+    public void delete(String[] ids) {
+        AssertUtil.isTrue(null == ids || ids.length == 0, "请选择待删除的记录id!");
+        ArrayList<User> users = new ArrayList<>();
+        for (String id : ids) {
+            User temp = this.getById(id);
+            temp.setIsDel(1);
+            users.add(temp);
+        }
+        AssertUtil.isTrue(!(this.updateBatchById(users)), "用户记录删除失败！");
+    }
+
+
 }

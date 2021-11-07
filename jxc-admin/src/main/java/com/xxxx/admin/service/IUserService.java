@@ -55,4 +55,23 @@ public interface IUserService extends IService<User> {
      * @return
      */
     Map<String, Object> userList(UserQuery userQuery);
+
+    /**
+     * 用户添加
+     * @param user
+     */
+    void saveUser(User user);
+
+    /**
+     * 用户更新
+     * @param user
+     */
+    void updateUser(User user);
+
+    /**
+     * 用户记录删除成功
+     * @param ids
+     */
+    void delete(String[] ids);
+
 }

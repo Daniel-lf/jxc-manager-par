@@ -1,4 +1,4 @@
-package com.xxxx.admin.config.security;
+package com.xxxx.admin.config.security.component;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
