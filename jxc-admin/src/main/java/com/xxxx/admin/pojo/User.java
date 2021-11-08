@@ -53,6 +53,9 @@ public class User implements Serializable, UserDetails {
     private Integer isDel;
 
     @TableField(exist = false)
+    private String roleIds;
+
+    @TableField(exist = false)
     Collection<? extends GrantedAuthority> authorities;
 
     @Override

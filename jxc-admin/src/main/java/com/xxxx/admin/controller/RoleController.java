@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -89,5 +90,23 @@ public class RoleController {
         return RespBean.success("角色记录删除成功！");
     }
 
+    @RequestMapping("queryAllRoles")
+    @ResponseBody
+    public List<Map<String,Object>> queryAllRoles(Integer userId){
+        return roleService.queryAllRoles(userId);
+    }
+
+    @RequestMapping("toAddGrantPage")
+    public String toAddGrantPage(Integer roleId,Model model){
+        model.addAttribute("roleId",roleId);
+        return "role/grant";
+    }
+
+    @RequestMapping("addGrant")
+    @ResponseBody
+    public RespBean addGrant(Integer roleId,Integer[] mids){
+        roleService.addGrant(roleId,mids);
+        return RespBean.success("角色记录授权成功！");
+    }
 
 }

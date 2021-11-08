@@ -6,7 +6,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xxxx.admin.dto.UserQuery;
 import com.xxxx.admin.mapper.UserMapper;
+import com.xxxx.admin.mapper.UserRoleMapper;
 import com.xxxx.admin.pojo.User;
+import com.xxxx.admin.pojo.UserRole;
+import com.xxxx.admin.service.IUserRoleService;
 import com.xxxx.admin.service.IUserService;
 import com.xxxx.admin.utils.AssertUtil;
 import com.xxxx.admin.utils.PageReusltUtil;
@@ -19,9 +22,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.StringBufferInputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * <p>
@@ -36,6 +37,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private IUserRoleService userRoleService;
+
     /**
      * 用户登录方法
      *
@@ -113,7 +118,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
         page = this.baseMapper.selectPage(page, queryWrapper);
         HashMap<String, Object> map = new HashMap<>();
-        return PageReusltUtil.getResult(page.getTotal(),page.getRecords());
+        return PageReusltUtil.getResult(page.getTotal(), page.getRecords());
     }
 
     /**
@@ -129,10 +134,34 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         user.setPassword(passwordEncoder.encode("123456"));
         user.setIsDel(0);
         AssertUtil.isTrue(!(this.save(user)), "用户记录添加失败！");
+        //重新查询用户记录
+        User temp = this.findUserByUserName(user.getUsername());
+        /**
+         * 给用户分配角色
+         * todo: 重点  这里传进来的user是有角色ids 而根据用户名查询user的ids是为null的(原因是userRole中的roldIds还没有存入到对应的表中)
+         */
+        relationUserRole(temp.getId(), user.getRoleIds());
+    }
+
+    private void relationUserRole(Integer userId, String roleIds) {
+        int count = userRoleService.count(new QueryWrapper<UserRole>().eq("user_id", userId));
+        if (count > 0) {
+            AssertUtil.isTrue(!(userRoleService.remove(new QueryWrapper<UserRole>().eq("user_id", userId))), "用户角色分配失败！");
+        }
+        if (StringUtils.isNotBlank(roleIds)) {
+            List<UserRole> userRoles = new ArrayList<>();
+            for (String s : roleIds.split(",")) {
+                UserRole userRole = new UserRole();
+                userRole.setUserId(userId);
+                userRole.setRoleId(Integer.parseInt(s));
+                userRoles.add(userRole);
+            }
+            AssertUtil.isTrue(!(userRoleService.saveBatch(userRoles)), "用户角色分配失败!");
+        }
     }
 
     /**
-     * 用户更新··
+     * 用户更新
      *
      * @param user
      */
@@ -142,6 +171,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         AssertUtil.isTrue(StringUtils.isBlank(user.getUsername()), "用户名不能为空!");
         User temp = this.findUserByUserName(user.getUsername());
         AssertUtil.isTrue(null != temp && !(temp.getId().equals(user.getId())), "用户名已存在！");
+        relationUserRole(user.getId(), user.getRoleIds());
         AssertUtil.isTrue(!(this.updateById(user)), "用户记录更新失败！");
     }
 
@@ -154,6 +184,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public void delete(String[] ids) {
         AssertUtil.isTrue(null == ids || ids.length == 0, "请选择待删除的记录id!");
+        /**
+         * 先删除从表userRole 查询userRole里面是否有用户对应的角色id 然后删除
+         */
+        int count=userRoleService.count(new QueryWrapper<UserRole>().in("user_id", Arrays.asList(ids)));
+        if(count>0){
+            AssertUtil.isTrue(!(userRoleService.remove(new QueryWrapper<UserRole>().in("user_id", Arrays.asList(ids)))),
+                    "用户记录删除失败！");
+        }
+
+
         ArrayList<User> users = new ArrayList<>();
         for (String id : ids) {
             User temp = this.getById(id);

@@ -7,15 +7,20 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.xxxx.admin.dto.RoleQuery;
 import com.xxxx.admin.pojo.Role;
 import com.xxxx.admin.mapper.RoleMapper;
+import com.xxxx.admin.pojo.RoleMenu;
+import com.xxxx.admin.service.IRoleMenuService;
 import com.xxxx.admin.service.IRoleService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xxxx.admin.utils.AssertUtil;
 import com.xxxx.admin.utils.PageReusltUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,6 +34,8 @@ import java.util.Map;
 @Service
 public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements IRoleService {
 
+    @Autowired
+    private IRoleMenuService roleMenuService;
 
     @Override
     public Map<String, Object> roleList(RoleQuery roleQuery) {
@@ -43,7 +50,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements IR
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRED,rollbackFor = Exception.class)
+    @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public void saveRole(Role role) {
         AssertUtil.isTrue(StringUtils.isBlank(role.getName()), "角色名不能为空!");
         /**
@@ -55,7 +62,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements IR
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRED,rollbackFor = Exception.class)
+    @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public void updateRole(Role role) {
         AssertUtil.isTrue(StringUtils.isBlank(role.getName()), "请输入角色名称！");
         Role temp = this.findRoleByRoleName(role.getName());
@@ -72,12 +79,38 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements IR
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRED,rollbackFor = Exception.class)
+    @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public void delete(Integer id) {
         AssertUtil.isTrue(null == id, "请选择待删除的记录！");
         Role role = this.getById(id);
         AssertUtil.isTrue(null == role, "待删除的记录不存在!");
         role.setIsDel(1);
         AssertUtil.isTrue(!(this.updateById(role)), "角色记录删除失败!");
+    }
+
+    @Override
+    public List<Map<String, Object>> queryAllRoles(Integer userId) {
+        return this.baseMapper.queryAllRole(userId);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+    public void addGrant(Integer roleId, Integer[] mids) {
+        Role role = this.getById(roleId);
+        AssertUtil.isTrue(null == role, "待授权的角色记录不存在！");
+        int count = roleMenuService.count(new QueryWrapper<RoleMenu>().eq("role_id", roleId));
+        if (count > 0) {
+            AssertUtil.isTrue(!(roleMenuService.remove(new QueryWrapper<RoleMenu>().eq("role_id", roleId))), "角色授权失败！");
+        }
+        if (null != mids && mids.length > 0) {
+            ArrayList<RoleMenu> roleMenus = new ArrayList<>();
+            for (Integer mid : mids) {
+                RoleMenu roleMenu = new RoleMenu();
+                roleMenu.setRoleId(roleId);
+                roleMenu.setMenuId(mid);
+                roleMenus.add(roleMenu);
+            }
+            AssertUtil.isTrue(!(roleMenuService.saveBatch(roleMenus)), "角色授权失败！");
+        }
     }
 }
