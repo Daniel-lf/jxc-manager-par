@@ -3,6 +3,8 @@ package com.xxxx.admin.service;
 import com.xxxx.admin.pojo.UserRole;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+import java.util.List;
+
 /**
  * <p>
  * 用户角色表 服务类
@@ -12,5 +14,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
  * @since 2021-11-07
  */
 public interface IUserRoleService extends IService<UserRole> {
+
+    List<String> findRolesByUserName(String userName);
 
 }

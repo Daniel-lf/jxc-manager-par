@@ -13,5 +13,17 @@
     <sql id="Base_Column_List">
         id, role_id, user_id
     </sql>
+    <!--当前用户所扮演的角色-->
+    <select id="findRolesByUserName" parameterType="String" resultType="java.lang.String">
+        SELECT
+            r.`name`
+        FROM
+            t_user_role ur
+                LEFT JOIN t_user u ON ur.user_id = u.id
+                LEFT JOIN t_role r ON ur.role_id = r.id
+        WHERE
+            r.is_del = 0
+          AND u.user_name = #{userName}
+    </select>
 
 </mapper>

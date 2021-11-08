@@ -1,19 +1,23 @@
 package com.xxxx.admin.config.security;
 
+import com.xxxx.admin.config.ClassPathTldsLoader;
 import com.xxxx.admin.config.security.component.CaptchaCodeFilter;
 import com.xxxx.admin.config.security.component.JxcAuthenticationFailedHandler;
 import com.xxxx.admin.config.security.component.JxcAuthenticationSuccessHandler;
 import com.xxxx.admin.config.security.component.JxcLogoutSuccessHandler;
 import com.xxxx.admin.pojo.User;
+import com.xxxx.admin.service.IRbacService;
 import com.xxxx.admin.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -24,6 +28,8 @@ import org.springframework.security.web.authentication.rememberme.JdbcTokenRepos
 import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 
 import javax.sql.DataSource;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @EnableGlobalMethodSecurity(prePostEnabled = true) 启动security环境
@@ -46,6 +52,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private CaptchaCodeFilter captchaCodeFilter;
     @Autowired
     private DataSource dataSource;
+    @Autowired
+    private IRbacService rbacService;
 
     /**
      * 放行静态资源
@@ -117,6 +125,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             @Override
             public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
                 User userDetails = userService.findUserByUserName(username);
+                /**
+                 * 1.查询用户对应的角色
+                 * 2.用户扮演的角色有那些权限记录
+                 */
+                List<String> roleNames = rbacService.findRolesByUserName(username);
+                List<String> authorities = rbacService.findAuthoritiesByRoleName(roleNames);
+                //todo: SpringSecurity要求角色前面必须加ROLE_
+                roleNames = roleNames.stream().map(role ->
+                        "ROLE_" + role).collect(Collectors.toList());
+                authorities.addAll(roleNames);
+                userDetails.setAuthorities(AuthorityUtils.commaSeparatedStringToAuthorityList(String.join(",", authorities)));
+
                 return userDetails;
             }
         };
@@ -131,6 +151,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth.userDetailsService(userDetailsService()).passwordEncoder(passwordEncoder());
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public ClassPathTldsLoader classPathTldsLoader() {
+        return new ClassPathTldsLoader();
     }
 
     @Bean

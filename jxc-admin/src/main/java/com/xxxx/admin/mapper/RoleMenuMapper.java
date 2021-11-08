@@ -16,4 +16,6 @@ import java.util.List;
 public interface RoleMenuMapper extends BaseMapper<RoleMenu> {
 
     List<Integer> queryRoleHasAllMenusByRoleId(Integer roleId);
+
+    List<String> findAuthoritiesByRoleName(List<String> roleNames);
 }

@@ -16,4 +16,6 @@ import java.util.List;
 public interface IRoleMenuService extends IService<RoleMenu> {
 
     List<Integer> queryRoleHasAllMenusByRoleId(Integer roleId);
+
+    List<String> findAuthoritiesByRoleName(List<String> roleNames);
 }

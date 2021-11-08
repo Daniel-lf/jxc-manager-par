@@ -8,6 +8,7 @@ import com.xxxx.admin.service.IUserService;
 import com.xxxx.admin.utils.AssertUtil;
 import com.xxxx.admin.vo.RespBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -99,6 +100,7 @@ public class UserController {
      * @return
      */
     @RequestMapping("index")
+    @PreAuthorize("hasAnyAuthority('1010')")
     public String index() {
         return "user/user";
     }
@@ -106,6 +108,7 @@ public class UserController {
 
     @RequestMapping("list")
     @ResponseBody
+    @PreAuthorize("hasAnyAuthority('101003')")
     public Map<String, Object> userList(UserQuery userQuery) {
         return userService.userList(userQuery);
     }

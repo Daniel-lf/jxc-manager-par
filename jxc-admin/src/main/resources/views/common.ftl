@@ -1,3 +1,4 @@
+<#assign security=JspTaglibs["http://www.springframework.org/security/tags"]/>
 <link rel="icon" href="${ctx.contextPath}/images/favicon.ico">
 <link rel="stylesheet" href="${ctx.contextPath}/lib/layui-v2.5.5/css/layui.css" media="all">
 <link rel="stylesheet" href="${ctx.contextPath}/css/layuimini.css" media="all">

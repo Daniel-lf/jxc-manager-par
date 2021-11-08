@@ -4,9 +4,9 @@
 
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.xxxx.admin.pojo.RoleMenu">
-        <id column="id" property="id" />
-        <result column="menu_id" property="menuId" />
-        <result column="role_id" property="roleId" />
+        <id column="id" property="id"/>
+        <result column="menu_id" property="menuId"/>
+        <result column="role_id" property="roleId"/>
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -15,12 +15,24 @@
     </sql>
     <!--查询当前roleId所拥有的menuIds-->
     <select id="queryRoleHasAllMenusByRoleId" resultType="java.lang.Integer">
+        SELECT menu_id
+        FROM t_role_menu
+        WHERE role_id = #{roleId}
+    </select>
+    <!--根据角色列表查询所有的菜单权限-->
+    <select id="findAuthoritiesByRoleName" resultType="java.lang.String">
         SELECT
-            menu_id
+            m.acl_value
         FROM
-            t_role_menu
+            t_role_menu rm
+        LEFT JOIN t_menu m ON rm.menu_id = m.id
+        LEFT JOIN t_role r ON rm.role_id = r.id
         WHERE
-            role_id =#{roleId}
+            r.is_del = 0
+        AND r.`name` IN
+        <foreach collection="list" item="roleName" open="(" separator="," close=")">
+            #{roleName}
+        </foreach>
     </select>
 
 </mapper>
