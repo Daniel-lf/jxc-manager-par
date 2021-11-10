@@ -55,7 +55,7 @@ layui.use(['element','table','layer'],function(){
         page : true,
         height : "full-125",
         limits : [10,15,20,25],
-        limit : 10,
+        limit : 15,
         toolbar: "#toolbarDemo",
         id : "goodsListTable",
         cols : [[
